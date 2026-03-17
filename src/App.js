@@ -79,6 +79,12 @@ function App() {
   setEditingIndex(index);
 };
 
+const appliedCount = jobs.filter(job => job.status === "Applied").length;
+const interviewCount = jobs.filter(job => job.status === "Interview").length;
+const offerCount = jobs.filter(job => job.status === "Offer").length;
+const rejectedCount = jobs.filter(job => job.status === "Rejected").length;
+
+
   return (
     <div style={{ padding: "20px" }}>
       <h1>Job Application Tracker</h1>
@@ -117,6 +123,16 @@ function App() {
   value={searchTerm}
   onChange={(e) => setSearchTerm(e.target.value)}
 />
+
+<h3>Application Stats</h3>
+
+<div style={{ marginBottom: "20px" }}>
+  <span style={{ marginRight: "15px" }}>Applied: {appliedCount}</span>
+  <span style={{ marginRight: "15px" }}>Interview: {interviewCount}</span>
+  <span style={{ marginRight: "15px" }}>Offer: {offerCount}</span>
+  <span>Rejected: {rejectedCount}</span>
+</div>
+
 
       <h3>My Applications</h3>
 
