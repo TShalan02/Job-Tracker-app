@@ -1,24 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function App() {
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");
   const [status, setStatus] = useState("Applied");
-  const [jobs, setJobs] = useState([]);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Load saved jobs instantly on startup
+  const [jobs, setJobs] = useState(() => {
+    const saved = localStorage.getItem("jobs");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Prevent StrictMode from overwriting saved data on first render
+  const isFirstLoad = useRef(true);
+
+  // Save jobs whenever they change (but skip first render)
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      return;
+    }
+
+    localStorage.setItem("jobs", JSON.stringify(jobs));
+  }, [jobs]);
+
+  const getStatusColor = (status) => {
+  switch (status) {
+    case "Applied":
+      return "gray";
+    case "Interview":
+      return "blue";
+    case "Offer":
+      return "green";
+    case "Rejected":
+      return "red";
+    default:
+      return "black";
+  }
+};
 
   const addJob = () => {
-    const newJob = {
-      title: jobTitle,
-      company: company,
-      status: status
-    };
+  if (!jobTitle || !company) return;
 
-    setJobs([...jobs, newJob]);
-
-    setJobTitle("");
-    setCompany("");
-    setStatus("Applied");
+  const newJob = {
+    title: jobTitle,
+    company: company,
+    status: status
   };
+
+  if (editingIndex !== null) {
+    const updatedJobs = [...jobs];
+    updatedJobs[editingIndex] = newJob;
+    setJobs(updatedJobs);
+    setEditingIndex(null);
+  } else {
+    setJobs([...jobs, newJob]);
+  }
+
+  setJobTitle("");
+  setCompany("");
+  setStatus("Applied");
+};
+
+  const deleteJob = (indexToDelete) => {
+    const updatedJobs = jobs.filter((_, index) => index !== indexToDelete);
+    setJobs(updatedJobs);
+  };
+
+  const startEdit = (index) => {
+  const job = jobs[index];
+
+  setJobTitle(job.title);
+  setCompany(job.company);
+  setStatus(job.status);
+
+  setEditingIndex(index);
+};
 
   return (
     <div style={{ padding: "20px" }}>
@@ -51,11 +110,47 @@ function App() {
 
       <button onClick={addJob}>Add Job</button>
 
+      <h3>Search Jobs</h3>
+
+<input
+  placeholder="Search by company or title..."
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+/>
+
       <h3>My Applications</h3>
 
-      {jobs.map((job, index) => (
+      {jobs.length === 0 && <p>No jobs added yet.</p>}
+
+      {jobs
+  .filter((job) =>
+    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.company.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  .map((job, index) => (
         <div key={index}>
-          {job.title} - {job.company} ({job.status})
+          {job.title} - {job.company} 
+<span style={{
+  color: "white",
+  backgroundColor: getStatusColor(job.status),
+  padding: "3px 8px",
+  borderRadius: "6px",
+  marginLeft: "8px"
+}}>
+  {job.status}
+</span>
+          <button
+  onClick={() => startEdit(index)}
+  style={{ marginLeft: "10px" }}
+>
+  Edit
+</button>
+          <button
+            onClick={() => deleteJob(index)}
+            style={{ marginLeft: "10px" }}
+          >
+            Delete
+          </button>
         </div>
       ))}
     </div>
